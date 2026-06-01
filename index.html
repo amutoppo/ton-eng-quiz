@@ -118,9 +118,31 @@
         .result-score {
             font-size: 2em;
             font-weight: bold;
-            margin: 15px 0;
+            margin: 15px 0 5px 0;
             color: #ff4d4d;
         }
+        
+        /* 今回の10問の正誤表スタイル */
+        .current-summary {
+            display: flex;
+            justify-content: center;
+            gap: 6px;
+            margin: 10px 0 20px 0;
+            flex-wrap: wrap;
+        }
+        .summary-dot {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75em;
+            font-weight: bold;
+        }
+        .summary-dot.c { background-color: #2e7d32; color: #fff; }
+        .summary-dot.w { background-color: #c62828; color: #fff; }
+
         .btn-action {
             background-color: #ff4d4d;
             color: #fff;
@@ -137,7 +159,7 @@
             background-color: #ff3333;
         }
         
-        /* タブとテーブルのスタイル */
+        /* 累積履歴用タブとテーブル */
         .tabs {
             display: flex;
             justify-content: center;
@@ -194,21 +216,14 @@
             font-size: 0.8em;
             display: inline-block;
         }
-        .badge.correct {
-            background-color: #2e7d32;
-            color: #fff;
-        }
-        .badge.wrong {
-            background-color: #c62828;
-            color: #fff;
-        }
+        .badge.correct { background-color: #2e7d32; color: #fff; }
+        .badge.wrong { background-color: #c62828; color: #fff; }
+        
         .empty-message {
             padding: 20px;
             text-align: center;
             color: #888;
         }
-        
-        /* 免責事項 */
         .disclaimer {
             font-size: 0.75em;
             color: #666;
@@ -218,9 +233,7 @@
             border-top: 1px dashed #333;
             padding-top: 15px;
         }
-        .hide {
-            display: none !important;
-        }
+        .hide { display: none !important; }
     </style>
 </head>
 <body>
@@ -245,6 +258,9 @@
     <div id="result-view" class="result-view hide">
         <h2>結果発表</h2>
         <div class="result-score" id="result-score"></div>
+        
+        <div class="current-summary" id="current-summary-area"></div>
+        
         <p id="pool-info"></p>
         
         <button class="btn-action" id="btn-restart">次の10問を解く</button>
@@ -282,7 +298,7 @@ const rawQuizData = [
     { id: 5, q: "Unboundラウンドの「Unbound」の意味は？", c: ["解き放たれた、制限のない", "罰せられた", "名無しの、匿名の", "顔のない、個性のない"], a: 1, exp: ["bound（縛られた）の否定で「解き放たれた」です。", "「Punished」の意味です。", "「Nameless」の意味です。", "「Faceless」の意味です。"] },
     { id: 6, q: "Mystic Moonの「Mystic」の意味は？", c: ["神秘的な", "悪意のある", "好奇心旺盛な、奇妙な", "致命的な、死に至る"], a: 1, exp: ["Mysticは「神秘的な」という意味です。", "「Malicious」の意味です。", "「Curious」の意味です。", "「Lethal」の意味です。"] },
     { id: 7, q: "Twilightラウンドの「Twilight」の意味は？", c: ["黄昏、薄明かり", "至（夏至・冬至）", "世界の終末、黙示録", "夜"], a: 1, exp: ["Twilightは「黄昏」「薄明かり」を意味します。", "「Solstice」の意味です。", "「Apocalypse」の意味です。", "「Night」の意味です。"] },
-    { id: 8, q: "Solsticeラウンドの「Solstice」の意味は？", c: ["至（夏至・冬至）", "黄昏、薄明かり", "世界の終末、黙示録", "起源、生まれ、原点"], a: 1, exp: ["Solsticeは夏至や冬至の「至（し）」を指します。", "「Twilight」の意味です。", "「Apocalypse」の意味です。", "「Origin」の意味です。"] },
+    { id: 8, q: "Solsticeラウンドの「Solstice」の意味は？", c: ["至（夏至・冬至）", "黄昏、薄明かり", "世界の終末、黙示録", "起源、生まれ、原点"], a: 1, exp: ["Solsticeは夏至や冬至の「至（し）」を指します。", "「Twilight`」の意味です。", "「Apocalypse」の意味です。", "「Origin」の意味です。"] },
     { id: 9, q: "An Arbiter（テラー）の「Arbiter」の意味は？", c: ["仲裁者、裁定者", "守護者、保護者", "追跡者", "法を執行する者、強制する者"], a: 1, exp: ["Arbiterは「仲裁者」「裁定者」を意味します。", "「Guardian」の意味です。", "「Pursuer」の意味です。", "「Enforcer」の意味です。"] },
     { id: 10, q: "Apocrean Harvesterの「Harvester」の意味は？", c: ["収穫者、刈り取り機", "ゴミ漁り、廃品回収者", "画家、ペンキ職人", "航海士、操縦士、案内役"], a: 1, exp: ["Harvest（収穫）する人から「収穫者」を意味します。", "「Scavenger」の意味です。", "「Painter」の意味です。", "「Navigator」の意味です。"] },
     { id: 11, q: "Arrival（テラー）の「Arrival」の意味は？", c: ["到着、出現", "脱出", "発表、アナウンス、告知", "侵入、侵害、違反"], a: 1, exp: ["Arriveの名詞形で「到着」「出現」です。", "「Escape」の意味です。", "「Announcement」の意味です。", "「Infringement」の意味です。"] },
@@ -292,7 +308,7 @@ const rawQuizData = [
     { id: 15, q: "Cubor's Revengeの「Revenge」の意味は？", c: ["復讐、復讐する", "案内、指導", "裁判、判決、審判", "観察、監視、目撃"], a: 1, exp: ["Revengeは「復讐」を意味します。", "「Guidance」の意味です。", "「Judgement」の意味です。", "「Observation」の意味です。"] },
     { id: 16, q: "Deleted（テラー）の「Deleted」の意味は？", c: ["削除された", "罰せられた", "破壊された", "存在する"], a: 1, exp: ["Deleteの過去分詞で「削除された」です。", "「Punished」の意味です。", "「Destroyed」の意味です。", "「Exist」の対義です。"] },
     { id: 17, q: "Demented Spongebobの「Demented」の意味は？", c: ["認知症の、発狂した", "悪意のある", "好奇心旺盛な、奇妙な", "怒った"], a: 1, exp: ["Dementedは理性を失った「発狂した」です。", "「Malicious」の意味です。", "「Curious」の意味です。", "「Angry」の意味です。"] },
-    { id: 18, q: "Dog Mimicの「Mimic」の意味は？", c: ["擬態する、真似る", "追跡する", "探す、追い求める", "破壊する"], a: 1, exp: ["Mimicは「擬態する」「真似る」です。", "「Pursue」の意味です。", "「Seek']の意味です。", "「Destroy」の意味です。"] },
+    { id: 18, q: "Dog Mimicの「Mimic」の意味は？", c: ["擬態する、真似る", "追跡する", "探す、追い求める", "破壊する"], a: 1, exp: ["Mimicは「擬態する」「真似る」です。", "「Pursue」の意味です。", "「Seek」の意味です。", "「Destroy」の意味です。"] },
     { id: 19, q: "DoomBoxの「Doom」の意味は？", c: ["破滅、運命", "恐怖、恐ろしいもの", "世界の終末、黙示録", "精神病、精神異常"], a: 1, exp: ["Doomは避けられない「破滅」「凶運」です。", "「Terror」の意味です。", "「Apocalypse」の意味です。", "「Psychosis」の意味です。"] },
     { id: 20, q: "Express Train To Hellの「Express」の意味は？", c: ["急行の、表現する", "致命的な、死に至る", "致命的な、死を招く", "突進する、急ぐ"], a: 1, exp: ["列車などの「急行」や「表現する」です。", "「Lethal」の意味です。", "「Fatal」の意味です。", "「Rush」の意味です。"] },
     { id: 21, q: "Harvest（マップ）の「Harvest」の意味は？", c: ["収穫", "実験（すること）", "開発、発展", "孤立、隔離"], a: 1, exp: ["Harvestは作物の「収穫」を意味します。", "「Experimentation」の意味です。", "「Development」の意味です。", "「Isolation」の意味です。"] },
@@ -302,7 +318,7 @@ const rawQuizData = [
     { id: 25, q: "Malicious Twinsの「Malicious」の意味は？", c: ["悪意のある", "好奇心旺盛な、奇妙な", "認知症の、発狂した", "怒った"], a: 1, exp: ["他人を害する「悪意のある」を意味します。", "「Curious」の意味です。", "「Demented」の意味です。", "「Angry」の意味です。"] },
     { id: 26, q: "MissingNoの「Missing」の意味は？", c: ["行方不明の、欠けている", "削除された", "名無しの、匿名の", "解き放たれた、制限のない"], a: 1, exp: ["Miss（失う）から「行方不明の」「欠落した」です。", "「Deleted」の意味です。", "「Nameless」の意味です。", "「Unbound」の意味です。"] },
     { id: 27, q: "Pale Associationの「Pale」の意味は？", c: ["青白い、淡い", "霧、もや", "夜", "黄昏、薄明かり"], a: 1, exp: ["顔色が「青白い」、色が「淡い」です。", "「Mist」の意味です。", "「Night」の意味です。", "「Twilight」の意味です。"] },
-    { id: 28, q: "Prisoner（テラー）の「Prisoner」の意味は？", c: ["囚人、捕虜", "刑務所長、看守、管理人", "有罪判決を受けた人、囚人", "詐欺師、偽物、騙り手"], a: 1, exp: ["Prison（刑務所）の「囚人」「捕虜」です。", "「Warden」の意味です。", "「Convict」の意味です。", "「Imposter」の意味です。"] },
+    { id: 28, q: "Prisoner（テラー）の「Prisoner」の意味は？", c: ["囚人、捕虜", "刑務所長、看守、管理人", "有罪判決を受けた人、囚人", "詐欺師、偽物、騙り手"], a: 1, exp: ["Prison（刑務所）の「囚人」「捕虜」です。", "「Warden」の意味です。", "「Convict']の意味です。", "「Imposter」の意味です。"] },
     { id: 29, q: "Red Fanaticの「Fanatic」の意味は？", c: ["狂信者、マニア", "仲裁者、裁定者", "守護者、保護者", "法を執行する者、強制する者"], a: 1, exp: ["何かに猛烈に熱狂する「狂信者」です。", "「Arbiter」の意味です。", "「Guardian」の意味です。", "「Enforcer」の意味です。"] },
     { id: 30, q: "Rush（テラー）の「Rush」の意味は？", c: ["突進する、急ぐ", "擬態する、真似る", "探す、追い求める", "触る、触れる"], a: 1, exp: ["激しく「突進する」「急ぐ」です。", "「Mimic」の意味です。", "「Seek」の意味です。", "「Touch」の意味です。"] },
     { id: 31, q: "Scavenger（テラー）の「Scavenger」の意味は？", c: ["ゴミ漁り、廃品回収者、腐肉食動物", "収穫者、刈り取り機", "画家、ペンキ職人", "航海士、操縦士、案内役"], a: 1, exp: ["廃品などを漁る「スカベンジャー」です。", "「Harvester」の意味です。", "「Painter」の意味です。", "「Navigator」の意味です。"] },
@@ -319,7 +335,7 @@ const rawQuizData = [
     { id: 42, q: "The Plague Doctorの「Plague」の意味は？", c: ["伝染病、ペスト", "バクテリア、細菌", "ウイルス", "（昆虫などの）大群"], a: 1, exp: ["歴史的な大病「ペスト」や「伝染病」です。", "「Bacteria」の意味です。", "「Virus」の意味です。", "「Swarm」の意味です。"] },
     { id: 43, q: "The Pursuer（テラー）の「Pursuer」の意味は？", c: ["追跡者", "仲裁者、裁定者", "守護者、保護者", "法を執行する者、強制する者"], a: 1, exp: ["Pursue（追跡する）をする人で「追跡者」です。", "「Arbiter」の意味です。", "「Guardian」の意味です。", "「Enforcer」の意味です。"] },
     { id: 44, q: "Those Olden Daysの「Olden」の意味は？", c: ["昔の、古き良き", "古典的な、定番の", "交互の、代わりの", "解き放たれた、制限のない"], a: 1, exp: ["Olden daysで「昔の」「古き良き」となります。", "「Classic」の意味です。", "「Alternate」の意味です。", "「Unbound」の意味です。"] },
-    { id: 45, q: "Time Ripperの「Ripper」の意味は？", c: ["切り裂くもの（人）", "収穫者、刈り取り機", "法を執行する者、強制する者", "追跡者"], a: 1, exp: ["Rip（切り裂く）から「切り裂くもの」です。", "「Harvester」の意味です。", "「Enforcer']の意味です。", "「Pursuer」の意味です。"] },
+    { id: 45, q: "Time Ripperの「Ripper」の意味は？", c: ["切り裂くもの（人）", "収穫者、刈り取り機", "法を執行する者、強制する者", "追跡者"], a: 1, exp: ["Rip（切り裂く）から「切り裂くもの」です。", "「Harvester」の意味です。", "「Enforcer」の意味です。", "「Pursuer」の意味です。"] },
     { id: 46, q: "Toy Enforcerの「Enforcer」の意味は？", c: ["法を執行する者、強制する者", "仲裁者、裁定者", "守護者、保護者", "追跡者"], a: 1, exp: ["Enforce（強制・執行する）から「執行者」です。", "「Arbiter」の意味です。", "「Guardian」の意味です。", "「Pursuer」の意味です。"] },
     { id: 47, q: "Warden（テラー）の「Warden」の意味は？", c: ["刑務所長、看守、管理人", "囚人、捕虜", "有罪判決を受けた人、囚人", "詐欺師、偽物、騙り手"], a: 1, exp: ["施設などの「看守」「管理人」を意味します。", "「Prisoner」の意味です。", "「Convict」の意味です。", "「Imposter」の意味です。"] },
     { id: 48, q: "Wild Yet Curious Creatureの「Curious」の意味は？", c: ["好奇心旺盛な、奇妙な", "悪意のある", "認知症の、発狂した", "怒った"], a: 1, exp: ["「好奇心旺盛な」または「奇妙な」を意味します。", "「Malicious」の意味です。", "「Demented」の意味です。", "「Angry」の意味です。"] },
@@ -327,14 +343,14 @@ const rawQuizData = [
     { id: 50, q: "This Killer does not existの「Exist」の意味は？", c: ["存在する", "削除された", "破壊する", "建設する、組み立てる"], a: 1, exp: ["Existは「存在する」という重要な動詞です。", "「Deleted」のもとです。", "「Destroy」の意味です。", "「Construct」の意味です。"] },
     { id: 51, q: "Ambush（テラー）の「Ambush」の意味は？", c: ["待ち伏せ、不意打ち", "突進する、急ぐ", "擬態する、真似る", "探す、追い求める"], a: 1, exp: ["隠れて襲う「待ち伏せ（アンブッシュ）」です。", "「Rush」の意味です。", "「Mimic」の意味です。", "「Seek」の意味です。"] },
     { id: 52, q: "Angry Munciの「Angry」の意味は？", c: ["怒った", "悪意のある", "好奇心旺盛な、奇妙な", "認知症の、発狂した"], a: 1, exp: ["Angryは「怒った」という意味の基本語です。", "「Malicious」の意味です。", "「Curious」の意味です。", "「Demented」の意味です。"] },
-    { id: 53, q: "Army in Blackの「Army」の意味は？", c: ["軍隊", "（昆虫などの）大群", "囚人、捕虜", "詐欺師、偽物、騙り手"], a: 1, exp: ["陸軍や広く「軍隊」を意味します。", "「Swarm」の意味です。", "「Prisoner」の意味です。", "「Imposter」の意味です。"] },
+    { id: 53, q: "Army in Black의「Army」の意味は？", c: ["軍隊", "（昆虫などの）大群", "囚人、捕虜", "詐欺師、偽物、騙り手"], a: 1, exp: ["陸軍や広く「軍隊」を意味します。", "「Swarm」の意味です。", "「Prisoner」の意味です。", "「Imposter」の意味です。"] },
     { id: 54, q: "Bliss (Lone Agent)の「Lone」の意味は？", c: ["孤独な、ただ一人の", "名無しの、匿名の", "顔のない、個性のない", "生きている"], a: 1, exp: ["Loneは「ただ一人の」「孤独な」です。", "「Nameless」の意味です。", "「Faceless」の意味です。", "「Living」の意味です。"] },
     { id: 55, q: "Chomper（テラー）の「Chomper」の意味は？", c: ["むしゃむしゃ噛むもの", "収穫者、刈り取り機", "ゴミ漁り、廃品回収者", "切り裂くもの（人）"], a: 1, exp: ["Chomp（むしゃむしゃ噛む）からきています。", "「Harvester」の意味です。", "「Scavenger」の意味です。", "「Ripper」の意味です。"] },
     { id: 56, q: "Convict Squadの「Convict」の意味は？", c: ["有罪判決を受けた人、囚人", "囚人、捕虜", "刑務所長、看守、管理人", "詐欺師、偽物、騙り手"], a: 1, exp: ["裁判で有罪と決まった「有罪判決囚」です。", "「Prisoner」の意味です。", "「Warden」の意味です。", "「Imposter」の意味です。"] },
     { id: 57, q: "Decayed Spongeの「Decayed」の意味は？", c: ["腐敗した、朽ちた", "堕落した、壊れた、データが破損した", "ひびの入った、狂った", "断片化した、バラバラになった"], a: 1, exp: ["Decayから「腐敗した」「朽ちた」です。", "「Corrupted」の意味です。", "「Cracked」の意味です。", "「Fragmented」の意味です。"] },
     { id: 58, q: "Eggman's Announcementの「Announcement」の意味は？", c: ["発表、アナウンス、告知", "案内、指導", "裁判、判決、審判", "侵入、侵害、違反"], a: 1, exp: ["Announceの名詞形で「発表」「告知」です。", "「Guidance」の意味です。", "「Judgement」の意味です。", "「Infringement」の意味です。"] },
     { id: 59, q: "Fusion Pilotの「Fusion」の意味は？", c: ["融合、結合", "（昆虫などの）大群", "バクテリア、細菌", "実験（すること）"], a: 1, exp: ["複数が合体する「融合」「フュージョン」です。", "「Swarm」の意味です。", "「Bacteria」の意味です。", "「Experimentation」の意味です。"] },
-    { id: 60, q: "Lord's Signalの「Signal」の意味は？", c: ["信号、合図", "発表、アナウンス、告知", "案内、指導", "裁判、判決、審判"], a: 1, exp: ["合図を送る「信号（シグナル）」です。", "「Announcement」の意味です。", "「Guidance」の意味です。", "「Judgement」の意味です。"] },
+    { id: 60, q: "Lord's Signalの「Signal」の意味は？", c: ["信号、合図", "発表、アナウンス、告知", "案内、指導", "裁判、判決、審判"], a: 1, exp: ["合図を送る「信号（シグナル）」です。", "「Announcement」の意味です。", "「Guidance']の意味です。", "「Judgement」の意味です。"] },
     { id: 61, q: "The Observationの「Observation」の意味は？", c: ["観察、監視、目撃", "案内、指導", "裁判、判決、審判", "発表、アナウンス、告知"], a: 1, exp: ["Observeの名詞形で「観察」「監視」です。", "「Guidance」の意味です。", "「Judgement」の意味です。", "「Announcement」の意味です。"] },
     { id: 62, q: "The Red Mistの「Mist」の意味は？", c: ["霧、もや", "青白い、淡い", "黄昏、薄明かり", "夜"], a: 1, exp: ["空気中の細かい水滴「霧（ミスト）」です。", "「Pale」の意味です。", "「Twilight」の意味です。", "「Night」の意味です。"] },
     { id: 63, q: "The Restlessの「Restless」の意味は？", c: ["落ち着きがない、休まらない", "飢え苦しんだ、非常に腹が減った", "罰せられた", "解き放たれた、制限のない"], a: 1, exp: ["Rest（休息）がない＝「落ち着きがない」です。", "「Starved」の意味です。", "「Punished」の意味です。", "「Unbound」の意味です。"] },
@@ -364,7 +380,7 @@ const rawQuizData = [
     { id: 87, q: "Developmentの「Development」の意味は？", c: ["開発、発展", "実験（すること）", "収穫", "孤立、隔離"], a: 1, exp: ["Develop（開発する）の名詞形です。", "「Experimentation」の意味です。", "「Harvest」の意味です。", "「Isolation」の意味です。"] },
     { id: 88, q: "Escape Routeの「Escape」の意味は？", c: ["脱出する、逃げる", "侵入者、侵略者", "突進する、急ぐ", "存在する"], a: 1, exp: ["危険から「脱出する」「逃げる」です。", "Refers to: Invader", "「Rush」の意味です。", "「Exist」の訳です。"] },
     { id: 89, q: "Experimentationの「Experimentation」の意味は？", c: ["実験（すること）", "開発、発展", "収穫", "孤立、隔離"], a: 1, exp: ["Experiment（実験）を行うことです。", "「Development」の意味です。", "「Harvest」の意味です。", "「Isolation」の意味です。"] },
-    { id: 90, q: "Isolation（マップ）の「Isolation」の意味は？", c: ["孤立、隔離", "迷宮、迷路", "土台、底板", "開発、発展"], a: 1, exp: ["切り離された「孤立」「隔離」です。", "「Labyrinth Rhine」の意味です。", "「Baseplate」の意味です。", "「Development」の意味です。"] },
+    { id: 90, q: "Isolation（マップ）の「Isolation」の意味は？", c: ["孤立、隔離", "迷宮、迷路", "土台、底板", "開発、発展"], a: 1, exp: ["切り離された「孤立」「隔離」です。", "「Labyrinth」の意味です。", "「Baseplate」の意味です。", "「Development」の意味です。"] },
     { id: 91, q: "Space Colonyの「Colony」の意味は？", c: ["植民地、居留地", "世界", "至（夏至・冬至）", "起源"], a: 1, exp: ["宇宙の「居留地」や「植民地」を指します。", "「World」の意味です。", "「Solstice」の意味です。", "「Origin」の意味です。"] },
     { id: 92, q: "Black Forestの「Forest」の意味は？", c: ["森、森林", "迷宮、迷路", "土台、底板", "孤立、隔離"], a: 1, exp: ["「森」「森林」を意味する基本名詞です。", "「Labyrinth」の意味です。", "「Baseplate」の意味です。", "「Isolation」の意味です。"] },
     { id: 93, q: "Challenge Cubeの「Cube」の意味は？", c: ["立方体、キューブ", "土台、底板", "迷宮、迷路", "森、森林"], a: 1, exp: ["3次元の「立方体（キューブ）」です。", "「Baseplate」の意味です。", "「Labyrinth」の意味です。", "「Forest」の意味です。"] },
@@ -381,7 +397,13 @@ let availableIds = [];
 let currentQuizSet = [];
 let currentIndex = 0;
 let score = 0;
-let sessionHistory = [];
+
+// 今回の10問のみのテンポラリ正誤フラグ配列（〇か×を入れる）
+let currentSessionDots = [];
+
+// 【解決】これまでに解いたすべての累計履歴（リセットがかかるまで蓄積）
+let cumulativeHistory = [];
+
 let currentTableMode = 'all';
 
 const quizView = document.getElementById('quiz-view');
@@ -394,6 +416,7 @@ const feedbackTitle = document.getElementById('feedback-title');
 const explanationsText = document.getElementById('explanations-text');
 const btnNext = document.getElementById('btn-next');
 const resultScore = document.getElementById('result-score');
+const currentSummaryArea = document.getElementById('current-summary-area');
 const poolInfo = document.getElementById('pool-info');
 const btnRestart = document.getElementById('btn-restart');
 const tableBody = document.getElementById('table-body');
@@ -402,15 +425,17 @@ const tabWrongBtn = document.getElementById('tab-wrong-btn');
 
 function initPool() {
     availableIds = rawQuizData.map(item => item.id);
+    cumulativeHistory = []; // 100問リセットがかかったら全履歴もまっさらにする
 }
 
 function generateQuizSet() {
+    // 100問すべて使い切ったらプールと全履歴を自動リセット
     if (availableIds.length < 10) {
         initPool();
     }
 
     currentQuizSet = [];
-    sessionHistory = [];
+    currentSessionDots = []; // 今の10問の正誤フラグをリセット
     
     for (let i = 0; i < 10; i++) {
         const randomIndex = Math.floor(Math.random() * availableIds.length);
@@ -475,7 +500,11 @@ function selectAnswer(choiceNum) {
 
     const isCorrect = (choiceNum === currentQuiz.a);
     
-    sessionHistory.push({
+    // 今の10問ドット用の判定を追加
+    currentSessionDots.push(isCorrect);
+
+    // 累計履歴（セッションを超えて残る）に追加
+    cumulativeHistory.push({
         question: currentQuiz.q,
         correctAnswer: currentQuiz.c[currentQuiz.a - 1],
         isCorrect: isCorrect
@@ -513,10 +542,11 @@ btnNext.addEventListener('click', () => {
     }
 });
 
+// 累積テーブルの描画（すべての履歴を対象にする）
 function renderResultTable() {
     tableBody.innerHTML = '';
     
-    const filteredHistory = sessionHistory.filter(item => {
+    const filteredHistory = cumulativeHistory.filter(item => {
         if (currentTableMode === 'wrong') return !item.isCorrect;
         return true;
     });
@@ -551,14 +581,27 @@ function renderResultTable() {
 function showResult() {
     quizView.classList.add('hide');
     resultView.classList.remove('hide');
+    
+    // 1. 今回の10問スコア
     resultScore.textContent = `${score} / 10 問正解`;
     
+    // 2. 今回の10問だけの簡易正誤表（〇×ドット表示）
+    currentSummaryArea.innerHTML = '';
+    currentSessionDots.forEach((isCorrect, idx) => {
+        const dot = document.createElement('div');
+        dot.className = isCorrect ? 'summary-dot c' : 'summary-dot w';
+        dot.textContent = idx + 1;
+        currentSummaryArea.appendChild(dot);
+    });
+    
+    // 3. 残りの未出題
     if (availableIds.length === 0) {
-        poolInfo.textContent = `全100問をすべて消化しました！次回リセットされます。`;
+        poolInfo.textContent = `全100問をすべて消化しました！次回スタート時に累計履歴と問題がリセットされます。`;
     } else {
         poolInfo.textContent = `残りの未出題数: ${availableIds.length} 問 / 100 問中`;
     }
 
+    // 5. 過去の履歴（累計）
     currentTableMode = 'all';
     tabAllBtn.classList.add('active');
     tabWrongBtn.classList.remove('active');
